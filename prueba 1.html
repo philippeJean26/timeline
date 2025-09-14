@@ -1,0 +1,204 @@
+# Nombre del estudiante: Jean Palma Consuegra
+# Grupo: 202016893_9
+# Programa : Ingenieria de sistemas
+# Código Fuente: autoria propia
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Línea de tiempo – Evolución de procesadores</title>
+<style>
+  :root{
+    --bg:#0b1020; --muted:#a7b3d1; --text:#e7ecff; --accent:#89a0ff; --accent-2:#5fe1a5;
+    --line:#2a3869; --shadow:0 10px 30px rgba(0,0,0,.35); --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 15% 0%,#16214a 0%,#0b1020 60%),var(--bg);
+       color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
+  header{padding:28px 20px 10px}
+  h1{font-size:clamp(18px,2.4vw,28px);margin:0}
+  .sub{color:var(--muted);font-size:14px;margin-top:6px}
+  .wrap{padding:10px 12px 30px}
+  .timeline-shell{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+  .scroll-x{overflow-x:auto;overflow-y:visible;padding-bottom:72px}
+  .axis{position:relative;height:460px;min-width:900px;margin:20px 0 8px}
+  .axis::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;
+    background:linear-gradient(90deg,transparent,var(--line),transparent);transform:translateY(-50%)}
+  .tick{position:absolute;width:1px;top:calc(50% - 10px);bottom:calc(50% - 10px);background:rgba(255,255,255,.08)}
+  .tick label{position:absolute;top:calc(50% + 14px);transform:translateX(-50%);font-size:12px;color:var(--muted)}
+  /* El punto queda opcional y DESACTIVADO por defecto; si lo reactivas, va detrás de las tarjetas */
+  .dot{position:absolute;top:50%;width:12px;height:12px;border-radius:50%;background:var(--accent);
+       opacity:.35;transform:translate(-50%,-50%);z-index:0;display:none} /* display:none => oculto */
+  .card{position:absolute;width:310px;max-width:42vw;padding:14px 14px 12px;
+    background:rgba(10,15,35,.85); /* opaco para no dejar ver nada detrás */
+    border:1px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:var(--shadow);backdrop-filter:blur(2px);
+    --side:1; /* 1=arriba, -1=abajo */ top:calc(50% + (var(--side)*-124px));transform:translateX(-50%);z-index:2}
+  .stem{position:absolute;left:50%;width:2px;background:linear-gradient(var(--accent),var(--accent-2));
+    top:50%;height:120px;transform-origin:top;transform:translateX(-50%) scaleY(-1);border-radius:2px;opacity:.9;z-index:1}
+  .kicker{font-size:11px;color:var(--accent-2);letter-spacing:.4px;text-transform:uppercase}
+  .title{margin:6px 0 4px;font-weight:700}
+  .meta{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12px;margin-bottom:6px}
+  .pill{border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:2px 8px}
+  .body{font-size:14px;color:#dbe3ff;margin-top:6px}
+  .body small{color:var(--muted)}
+  details{margin-top:8px;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.12);border-radius:12px;padding:8px 10px}
+  details summary{cursor:pointer;color:var(--accent);font-size:13px}
+  details[open]{background:rgba(255,255,255,.06)}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:8px}
+  .legend .key{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:10px;height:10px;border-radius:50%;background:linear-gradient(45deg,var(--accent),var(--accent-2))}
+  @media (max-width:680px){
+    .axis{height:560px}
+    .card{width:260px;top:calc(50% + (var(--side)*-160px))}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Evolución histórica de los procesadores</h1>
+  <div class="sub">Línea de tiempo con hitos, fechas, características e influencia en la arquitectura computacional.</div>
+</header>
+
+<div class="wrap">
+  <div class="timeline-shell">
+    <div id="timeline" class="scroll-x" role="region" aria-label="Línea de tiempo de procesadores">
+      <div class="axis" id="axis"></div>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span class="key"><span class="sw"></span> Hito tecnológico</span>
+      <span>Arriba/abajo alternado; “Ver detalles” con contexto del propio hito.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== CONFIG ====== */
+const SHOW_DOT = false; // ← pon true si quieres ver el punto de cada hito (irá detrás de la tarjeta)
+
+/* ====== HITOS (detalle específico por hito) ====== */
+const EVENTOS = [
+  { anio:1971, hito:"Intel 4004",
+    caracteristicas:"Primer microprocesador comercial de un solo chip (4 bits, ~740 kHz).",
+    influencia:"Activa la miniaturización y reduce costos: base de microcontroladores y SoC.",
+    detalle:"Unificó CPU en un chip, probando que control y cómputo podían integrarse. Inspiró microcontroladores y, más tarde, SoC con menos placas y menor consumo." },
+  { anio:1978, hito:"Intel 8086",
+    caracteristicas:"Introduce la ISA x86 (16 bits) y segmentación.",
+    influencia:"Compatibilidad sostenida por décadas; base del ecosistema PC.",
+    detalle:"La segmentación y la ISA x86 fijaron un estándar. La transición posterior a x86-64 mantuvo compatibilidad, permitiendo evolución sin romper software legado." },
+  { anio:1989, hito:"Intel 80486",
+    caracteristicas:"FPU y caché L1 integradas; pipeline mejorado.",
+    influencia:"Más IPC y latencias menores; paso clave hacia jerarquías de memoria efectivas.",
+    detalle:"Integrar FPU y caché L1 redujo la dependencia del bus externo y afianzó diseños supersescalares." },
+  { anio:1995, hito:"Pentium Pro",
+    caracteristicas:"Ejecución fuera de orden, micro-ops, predicción de saltos.",
+    influencia:"Gran salto en rendimiento de escritorio y servidores.",
+    detalle:"La traducción a micro-operaciones y el out-of-order maximizan el uso de unidades funcionales: base de microarquitecturas x86 modernas." },
+  { anio:2003, hito:"AMD64 (Opteron/Athlon 64)",
+    caracteristicas:"Extiende x86 a 64 bits; controlador de memoria integrado.",
+    influencia:"Más direcciones y registros; acceso a memoria más eficiente.",
+    detalle:"El controlador integrado reduce latencia y habilita NUMA eficiente; 64 bits amplía capacidad de procesos/datos." },
+  { anio:2006, hito:"Intel Core (multi-core)",
+    caracteristicas:"Generaliza el multinúcleo en consumo.",
+    influencia:"El paralelismo por hilos sustituye la escalada de frecuencia.",
+    detalle:"El límite térmico desplazó la estrategia hacia más núcleos + coherencia de caché; exige software paralelo." },
+  { anio:2011, hito:"ARM Cortex-A (era smartphone)",
+    caracteristicas:"SoC eficientes (CPU+GPU+ISP) con foco en energía.",
+    influencia:"Movilidad masiva y base del edge computing.",
+    detalle:"Filosofía RISC + eficiencia energética dan autonomías largas; SoC acerca el cómputo al dato (cámara, señal, radio)." },
+  { anio:2020, hito:"Apple M1",
+    caracteristicas:"SoC con memoria unificada y aceleradores (GPU/NPU).",
+    influencia:"Gran rendimiento/consumo en portátiles y desktop.",
+    detalle:"Memoria unificada evita copias CPU↔GPU; aceleradores elevan IA y multimedia manteniendo consumo bajo." }
+];
+
+/* ====== RENDER ====== */
+(function renderTimeline(){
+  const axis = document.getElementById('axis');
+
+  // colchón grande para que el primer/último hito no se recorten
+  const CARD_W = 310;
+  const leftPad  = Math.max(250, Math.round(CARD_W * 0.9));
+  const rightPad = Math.max(250, Math.round(CARD_W * 0.9));
+
+  const minYear = Math.min(...EVENTOS.map(e => e.anio));
+  const maxYear = Math.max(...EVENTOS.map(e => e.anio));
+  const span = Math.max(1, maxYear - minYear);
+  const PX_PER_YEAR = 110;
+  const width = Math.max(900, Math.round(span * PX_PER_YEAR + leftPad + rightPad));
+  axis.style.width = width + 'px';
+
+  // ticks
+  const step = Math.max(5, Math.round(span / 8));
+  for (let y = Math.floor(minYear/step)*step; y <= maxYear; y += step){
+    const x = leftPad + ((y - minYear)/span) * (width - leftPad - rightPad);
+    const tick = document.createElement('div');
+    tick.className = 'tick'; tick.style.left = `${x}px`;
+    const label = document.createElement('label'); label.textContent = y;
+    tick.appendChild(label); axis.appendChild(tick);
+  }
+
+  const nodes = [];
+  EVENTOS.sort((a,b)=>a.anio-b.anio).forEach((e,i)=>{
+    const x = leftPad + ((e.anio - minYear)/span) * (width - leftPad - rightPad);
+    const side = (i % 2 === 0) ? 1 : -1; // alterna arriba/abajo
+
+    if (SHOW_DOT){
+      const dot = document.createElement('div');
+      dot.className = 'dot'; dot.style.left = `${x}px`; dot.title = `${e.anio} · ${e.hito}`;
+      axis.appendChild(dot);
+    }
+
+    const stem = document.createElement('div');
+    stem.className = 'stem'; stem.style.left = `${x}px`;
+    stem.style.transform = `translateX(-50%) scaleY(${side === 1 ? -1 : 1})`;
+    axis.appendChild(stem);
+
+    const card = document.createElement('article');
+    card.className = 'card'; card.style.left = `${x}px`;
+    card.style.setProperty('--side', side);
+    card.setAttribute('role','group'); card.setAttribute('aria-labelledby', `t-${i}`);
+    card.innerHTML = `
+      <div class="meta"><span class="pill">${e.anio}</span><span class="kicker">Hito tecnológico</span></div>
+      <div id="t-${i}" class="title">${e.hito}</div>
+      <div class="body">
+        <strong>Características:</strong> ${e.caracteristicas}<br/>
+        <small><strong>Influencia:</strong> ${e.influencia}</small>
+      </div>
+      <details>
+        <summary>Ver detalles</summary>
+        <div style="margin-top:6px; font-size:13px; color:#cdd8ff;">${e.detalle}</div>
+      </details>`;
+    axis.appendChild(card);
+
+    nodes.push({stem, card, side});
+  });
+
+  function fit(){
+    let needed = 440;
+    nodes.forEach(({card})=>{
+      const bottom = card.offsetTop + card.offsetHeight;
+      if (bottom > needed) needed = bottom + 24;
+    });
+    axis.style.height = needed + 'px';
+
+    const axisCenter = axis.clientHeight / 2;
+    nodes.forEach(({stem, card, side})=>{
+      const top = card.offsetTop;
+      const bottom = card.offsetTop + card.offsetHeight;
+      let dist = 100;
+      if (side === 1){ // arriba → hasta borde inferior de la tarjeta
+        dist = Math.max(20, axisCenter - bottom + 10);
+      } else {        // abajo → hasta borde superior
+        dist = Math.max(20, top - axisCenter + 10);
+      }
+      stem.style.height = `${dist}px`;
+    });
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
+</script>
+</body>
+</html>
